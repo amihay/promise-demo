@@ -66,14 +66,13 @@ console.log('Promise.allSettled execution flow continues - not waiting for the t
 // after all tasks are completed    -> we go to .then()
 // ------------------------------------------------------
 
-*/
-
+---------- draft ------------
 
 const arrayOfPromises_safely = [];
 for (let i = 0 ; i < 5; i += 1) {
     arrayOfPromises_safely.push(new Promise((resolve, reject) => {
       setTimeout(() => {
-        if (Math.random() > 0.2) {
+        if (i != 2) {
           console.log('Promise ' + i + ' is good');
           resolve('Promise ' + i + ' - Some value');
         } else {
@@ -81,26 +80,30 @@ for (let i = 0 ; i < 5; i += 1) {
           reject('Promise ' + i + ' - Some error');
           throw new Error("what??");
         }
-    }, i * 100);
+    }, i * 1000);
   }));
 }
 
 
 try {
-  const safely_promiseAll = await Promise.all(arrayOfPromises_safely);
-  safely_promiseAll.then(() => console.log('safely Promise.all resolved'))
-  .catch(e => console.log('safely Promise.all error occured: ' + e));
-
-  console.log('done');
+  console.log('Safely Promise.all - starting');
+  const safelyPromiseAll = await Promise.all(arrayOfPromises_safely);
+  safelyPromiseAll.then(() => console.log('Safely Promise.all - all promises are resolved'))
+          .catch(e => console.log('Safely Promise.all - one of the promises rejected, error occured: ' + e));
+  console.log('Safely Promise.all execution flow continues after all promises have completed');
+  console.log('safely Promise.all results:');
+  console.log(safelyPromiseAll);
 } catch (error) {
-  console.log("promise all failed, going for the safely code")
+  console.log("promise all failed, going for the safely catch block")
   const safely_promiseAllSettled = Promise.allSettled(arrayOfPromises_safely);
-  console.log('safely Promise.allSettled results: ');
+  console.log('safely Promise.allSettled results:');
   console.log(safely_promiseAllSettled);
 }
 
+---------- end draft ----------------
+*/
 
-function resolveAfter2Seconds(x: string) {
+const resolveAfter2Seconds = async (x: string) => {
   console.log('res ' + x);
   return new Promise((resolve) => {
     console.log('promise ' + x);
@@ -111,6 +114,40 @@ function resolveAfter2Seconds(x: string) {
   });
 };
 
+const rejectAfter2Seconds = async (x: string) : Promise<string> => {
+  console.log('rej ' + x);
+  return new Promise((resolve, reject) => {
+    console.log('promise ' + x);
+    setTimeout(() => {
+      console.log("timout " + x);
+      reject(x);
+    }, 2000);
+  });
+};
+
+const safelyPromiseAll = async () => {
+  
+    console.log('Safely Promise.all - starting');
+    const a =  resolveAfter2Seconds("a");
+    const b =  rejectAfter2Seconds("b");
+    const promises = [a, b];
+  try {
+    const safelyPromiseAllResult = await Promise.all(promises);
+    console.log('Safely Promise.all execution flow continues after all promises have completed');
+    console.log('safely Promise.all results:');
+    console.log(safelyPromiseAllResult);
+  } catch (error) {
+    console.log("promise all failed, going for the safely catch block")
+    const safely_promiseAllSettled = Promise.allSettled(promises);
+    console.log('safely Promise.allSettled results:');
+    console.log(safely_promiseAllSettled);
+  }
+}
+
+safelyPromiseAll();
+console.log("after safelyPromiseAll");
+
+/*
 const foo = async function () { 
   console.log("foo start"); 
   const a =  resolveAfter2Seconds("1");
@@ -136,16 +173,7 @@ foo_await().then((v) => {
   console.log("foo_await() then: " + v);  
 });
 
-function rejectAfter2Seconds(x: string) {
-  console.log('rej ' + x);
-  return new Promise((resolve, reject) => {
-    console.log('promise ' + x);
-    setTimeout(() => {
-      console.log("timout " + x);
-      reject(x);
-    }, 2000);
-  });
-};
+
 
 const foo_reject_await = async function () { 
   console.log("foo_reject_await start"); 
@@ -163,9 +191,9 @@ const completeAllSafely = async function <T>(promises: Promise<T>[]): Promise<T[
   try {
     return await Promise.all(promises);
   } catch (error) {
+    console.log("await Promise.all - catch block");
     const promisesSettledResults = await Promise.allSettled(promises);
-    //logFailedPromises(promisesSettledResults);
-    console.log("catch block");
+    
 
     throw error;
   }
